@@ -12,10 +12,12 @@ int wait(int t) {
 int main () {
 
     int x; // 0 or 1
+    int k;
     std::cin >> x;
+    std::cin >> k;
 
     int i = 0;
-    while(i);
+    while(i != k);
     {
         if (x == 0) {
             wait(10);
@@ -25,8 +27,8 @@ int main () {
             wait(20);
         }
 
-        std::cout << i << '\n';
         i++;
+        std::cout << i << '\n';
     }   
 
 }

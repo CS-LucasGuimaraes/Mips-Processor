@@ -24,17 +24,17 @@ main:
    while_main_begin: 
    
       if_main_begin:
-      bne $s0, $0, else_main_begin
+         bne $s0, $0, else_main_begin
 
-      addi $a0, $0, 10
-      jal wait
+         addi $a0, $0, 10
+         jal wait
 
-      jal if_else_main_end
+         jal if_else_main_end
 
       else_main_begin: 
 
-      addi $a0, $0, 20
-      jal wait
+         addi $a0, $0, 20
+         jal wait
 
       if_else_main_end:
 
@@ -42,4 +42,4 @@ main:
 
       sw $t0, 8($0)
 
-   bne $t0, $s1, while_wait_begin
+   bne $t0, $s1, while_main_begin
