@@ -2,8 +2,9 @@
 
 int wait(int t) {
 
-    while (t < 0) {
-        t--;
+    int i = 0;
+    while (i != t) {
+        i++;
     }
 
 }
@@ -13,7 +14,8 @@ int main () {
     int x; // 0 or 1
     std::cin >> x;
 
-    for (int i = 0; i < 40; i++)
+    int i = 0;
+    while(i);
     {
         if (x == 0) {
             wait(10);
@@ -24,6 +26,7 @@ int main () {
         }
 
         std::cout << i << '\n';
-    }
+        i++;
+    }   
 
 }
