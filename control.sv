@@ -29,13 +29,13 @@ always @(*)
                     mem2Reg =   1'b0;
                     memWrite =  1'b0;
                     ALUsrc =    1'b0;
-                    regWrite =  1'b1;
+                    regWrite =  1'b0;
                     signXtend = (funct[0]) ? 1'b0 : 1'b1;
                     ALUop =     3'b111; // NOP
                     
                     casex(funct)       
                         6'b00100X:  // Jump (JR)
-                            jump =      1'b1;
+                            jump = 1'b1;
                     endcase
                 end
 
@@ -88,19 +88,19 @@ always @(*)
       
              `JAL:
                 begin
-                    reg_dst =   1'b0;
+                    reg_dst =   1'b1;
                     jump =      1'b1;
                     branch =    1'b0;
                     memRead =   1'b0;
                     mem2Reg =   1'b0;
                     memWrite =  1'b0;
                     ALUsrc =    1'b0;
-                    regWrite =  1'b0;
+                    regWrite =  1'b1;
                     ALUop =     3'b111;  
                     signXtend = 1'b0;
-
-                    jump_address = {6'b0, instruction[25:0]};
                 end
+
+            `ADDI: 
 
         endcase
     end

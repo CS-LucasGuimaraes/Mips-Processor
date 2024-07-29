@@ -100,9 +100,9 @@ module register_file(
     input [31:0] write_data,
     output [31:0] read_data1,
     output [31:0] read_data2,
-    input write);
-
-reg [31:0] registers[31:0];
+    output reg [31:0] registers[31:0],
+    input write
+);
 
 integer i;
 initial begin 
@@ -126,9 +126,11 @@ end
 endmodule
 
 module control(
+    input clk,
     input [5:0] instruction,
-    input [5:0] funct,
+    input [5:0] funct,    
     input zero,
+    output reg jal,
     output reg reg_dst,
     output reg jump,
     output reg branch,
@@ -138,23 +140,23 @@ module control(
     output reg [2:0] ALUop,
     output reg memWrite,
     output reg ALUsrc,
-    output reg signXtend,
-    output reg [31:0] jump_address
+    output reg signXtend
     );
 
-always @(*)
+always @ (*)
     begin
         casex(instruction)
             `R_TYPE:
                 begin
-                    reg_dst =   1'b1;
+                    reg_dst =   1'b0;
                     jump =      1'b0;
                     branch =    1'b0;
                     memRead =   1'b0;
                     mem2Reg =   1'b0;
                     memWrite =  1'b0;
                     ALUsrc =    1'b0;
-                    regWrite =  1'b1;
+                    regWrite =  1'b0;
+                    jal = 1'b0;
                     signXtend = (funct[0]) ? 1'b0 : 1'b1;
                     ALUop =     3'b111; // NOP
                     
@@ -165,7 +167,7 @@ always @(*)
                 end
 
 
-            6'b0001XX:  // Branch Instructions
+             `BNE:  // Branch Instructions
                 begin
                     reg_dst =   1'b0;
                     branch =    1'b1;
@@ -174,15 +176,11 @@ always @(*)
                     memWrite =  1'b0;
                     ALUsrc =    1'b1;
                     regWrite =  1'b0;
-                    
-                    case(instruction)
-                        `BNE:
-                            ALUop = 3'b110;
-                    endcase
+                    ALUop = 3'b110;
+                    jal = 1'b0;
                 end
             
-            //TODO Complete Load and Store instructions
-            6'b100XXX:  // Load Instructions
+             `LW:  // Load Instructions
                 begin
                     reg_dst =   1'b0;
                     branch =    1'b0;
@@ -194,9 +192,11 @@ always @(*)
                     regWrite =  1'b1;
                     ALUop =     3'b000;
                     signXtend = 1'b1;
+                    jal = 1'b0;
+                    $display("LW!!!!");
                 end
                 
-            6'b1010XX:  // Store Instructions
+             `SW:  // Store Instructions
                 begin
                    reg_dst =    1'b0;
                     branch =    1'b0;
@@ -207,7 +207,8 @@ always @(*)
                     ALUsrc =    1'b1;
                     regWrite =  1'b0;
                     ALUop =     3'b000;
-                    signXtend = 1'b1; 
+                    signXtend = 1'b1;
+                    jal = 1'b0;
                 end
 
       
@@ -220,11 +221,27 @@ always @(*)
                     mem2Reg =   1'b0;
                     memWrite =  1'b0;
                     ALUsrc =    1'b0;
-                    regWrite =  1'b0;
+                    regWrite =  1'b1;
                     ALUop =     3'b111;  
                     signXtend = 1'b0;
+                    jal = 1'b1;
+                end
 
-                    jump_address = {6'b0, instruction[25:0]};
+            `ADDI:
+                begin
+                    reg_dst =   1'b0;
+                    jump =      1'b0;
+                    branch =    1'b0;
+                    memRead =   1'b0;
+                    mem2Reg =   1'b0;
+                    memWrite =  1'b0;
+                    ALUsrc =    1'b1;
+                    regWrite =  1'b1;
+                    ALUop =     3'b010;  
+                    signXtend = 1'b1;
+                    jal = 1'b0;
+                    $display("ADDI!!!!");
+                    
                 end
 
         endcase
@@ -237,6 +254,7 @@ module processor(
 
 // Control Wires
 wire reg_dst;
+wire jal;
 wire jump;
 wire branch;
 wire memRead;
@@ -247,46 +265,66 @@ wire regWrite;
 wire [2:0] ALUop;
 wire zero;
 wire [31:0] ALUresult;
+wire ALUsrc;
 
 
 // PC + Instruction Memory Wires
 reg [31:0]      pc;
+reg [31:0]      pcplus4;
 wire [31:0]     instruction;
 wire [5:0]      opCode = instruction[31:26];
-wire [31:0]     jump_address;
+reg [31:0]      jump_address;
 wire [4:0]      src_addr = instruction[25:21];
 wire [4:0]      trgt_addr = instruction[20:16];
 wire [4:0]      dest_addr = instruction[15:11];
 wire [5:0]      funct = instruction[5:0];
+wire [15:0]     immediate = instruction[15:0];
 
 // REGISTER WIRES
+reg  [31:0] registers[31:0];
 wire [31:0] read_data;
-wire [4:0] reg_file_write_address = (reg_dst) ? dest_addr : trgt_addr;
+reg  [4:0] reg_file_write_address;
 wire [31:0] reg_file_write_data = (mem2Reg) ? read_data : ALUresult;
-wire [31:0] reg_file_out1;
-wire [31:0] reg_file_out2;
+reg [31:0] reg_file_out1;
+reg [31:0] reg_file_out2;
+wire [31:0] alu_input_2 = (ALUsrc) ? {16'b0, immediate} : reg_file_out2;
 
-assign reg_file_write_address = (reg_dst) ? instruction[15:11] : instruction[20:16];
+always @ (*) begin
+    if (reg_dst)
+        assign reg_file_write_address = instruction[15:11];
+    else begin
+        if (jal) assign reg_file_write_address = 5'b11111;
+        else assign reg_file_write_address = instruction[20:16];
+    end
+end
+
 
 always@(posedge clk)
 begin
-    if (jump) assign pc = jump_address << 2;
-    else if (branch) assign pc = instruction[15:0] << 2;
-    else assign pc = pc + 4;
+    if (jal | branch) jump_address = {16'd0, instruction[15:0]} << 2;
+    else if (jump) jump_address = registers[31];
+    else assign jump_address = pc + 4;
+
+    assign pc = jump_address;
 end
+
 
 // Instantiation
 
+
 ALU my_alu(.ALUcontrol(ALUop),
                      .SrcA(reg_file_out1),
-                     .SrcB(reg_file_out2),
+                     .SrcB(alu_input_2),
                      .ALUresult(ALUresult),
                      .zero(zero)
 );
 
-control my_control(.instruction(instruction),
+control my_control(.clk(clk),
+                     .instruction(opCode),
+                     .memWrite(memWrite),
                      .funct(funct),
                      .zero(zero),
+                     .jal(jal),
                      .reg_dst(reg_dst),
                      .jump(jump),
                      .branch(branch),
@@ -295,8 +333,7 @@ control my_control(.instruction(instruction),
                      .regWrite(regWrite),
                      .ALUop(ALUop),
                      .ALUsrc(ALUsrc),
-                     .signXtend(signXtend),
-                     .jump_address(jump_address)
+                     .signXtend(signXtend)
 );
 
 register_file my_reg_file(.clk(clk), 
@@ -306,7 +343,8 @@ register_file my_reg_file(.clk(clk),
                      .write_data(reg_file_write_data), 
                      .read_data1(reg_file_out1), 
                      .read_data2(reg_file_out2), 
-                     .write(regWrite));
+                     .write(regWrite),
+                     .registers(registers));
 
 instruction_memory my_ins_mem(.address(pc), .instruction(instruction));
 

@@ -1,0 +1,1 @@
+void contra_fatos(){}

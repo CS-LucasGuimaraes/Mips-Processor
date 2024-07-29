@@ -1,16 +1,17 @@
 `timescale 1ns / 1ps
 
-module MIPS_tb();
+
+module MIPS_tb;
     reg clk;
     
     processor mips(
-        .clk(clk);
+        .clk(clk)
     );
         
     initial 
     begin
       	$dumpfile("dump.vcd");
-  		$dumpvars(0, top.atop);
+  		$dumpvars();
       
         // Load 0 into data memory 0
         mips.data_mem.memory[0] = 8'd0;
@@ -44,8 +45,8 @@ module MIPS_tb();
         // INSTRUCTION 4
         mips.my_ins_mem.memory[12] = 8'b00010101;
         mips.my_ins_mem.memory[13] = 8'b00100100;
-        mips.my_ins_mem.memory[14] = 8'b11111111;
-        mips.my_ins_mem.memory[15] = 8'b11111110;
+        mips.my_ins_mem.memory[14] = 8'b00000000;
+        mips.my_ins_mem.memory[15] = 8'b00000001;
         
         // INSTRUCTION 5
         mips.my_ins_mem.memory[16] = 8'b00000011;
@@ -122,12 +123,15 @@ module MIPS_tb();
         // INSTRUCTION 17
         mips.my_ins_mem.memory[64] = 8'b00010101;
         mips.my_ins_mem.memory[65] = 8'b00010001;
-        mips.my_ins_mem.memory[66] = 8'b11111111;
-        mips.my_ins_mem.memory[67] = 8'b11110111;
+        mips.my_ins_mem.memory[66] = 8'b00000000;
+        mips.my_ins_mem.memory[67] = 8'b00001000;
 
         clk = 0;
-        
-        #10
+      
+      	mips.pc = 32'd0;
+      
+      	#60;
+      	$finish;
     end
 
     always begin 

@@ -1,4 +1,4 @@
-module processor(
+    module processor(
     input clk
 );
 
