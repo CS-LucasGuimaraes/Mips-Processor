@@ -8,9 +8,9 @@ module data_memory (
     input write_enable
 );
 
-reg [7:0] memory [1023:0]
+reg [7:0] memory [1023:0];
 
-assign read_data = {memory[address], memory[address+1], memory[address+2], memory[address+3] };
+assign read_data = {memory[address], memory[address+1], memory[address+2], memory[address+3]};
 
 always @(negedge clk)
 begin
@@ -19,6 +19,8 @@ begin
         memory[address+1] <= write_data[23:16];
         memory[address+2] <= write_data[15: 8];
         memory[address+3] <= write_data[ 7: 0];
+
+        $display("Valor %b carregado na posição %b", write_data, address);
     end
 end
 

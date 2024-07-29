@@ -1,4 +1,5 @@
-`include "mips_isa.v"
+`include "mips_codes.sv"
+
 module control(
     input [5:0] instruction,
     input [5:0] funct,
@@ -8,16 +9,18 @@ module control(
     output reg branch,
     output reg memRead,
     output reg mem2Reg,
+    output reg regWrite,
     output reg [2:0] ALUop,
     output reg memWrite,
     output reg ALUsrc,
-    output reg regWrite,
-    output reg signXtend);
+    output reg signXtend,
+    output reg [31:0] jump_address
+    );
 
 always @(*)
     begin
         casex(instruction)
-            `R_TYPE:    
+            `R_TYPE:
                 begin
                     reg_dst =   1'b1;
                     jump =      1'b0;
@@ -30,31 +33,13 @@ always @(*)
                     signXtend = (funct[0]) ? 1'b0 : 1'b1;
                     ALUop =     3'b111; // NOP
                     
-                    casex(funct)              
-                        6'b00100X:  // Jump
+                    casex(funct)       
+                        6'b00100X:  // Jump (JR)
                             jump =      1'b1;
                     endcase
                 end
-            
-            `J:
-                begin
-                    reg_dst =   1'b0;
-                    jump =      1'b1;
-                    branch =    1'b0;
-                    memRead =   1'b0;
-                    mem2Reg =   1'b0;
-                    memWrite =  1'b0;
-                    ALUsrc =    1'b0;
-                    regWrite =  1'b1;
-                    ALUop =     3'b111;  
-                    signXtend = 1'b0;       
-                casex(funct)
-                    6'b000011: //JAL //TODO: implementar JAL
-                endcase
-                end
-                
-            
-                
+
+
             6'b0001XX:  // Branch Instructions
                 begin
                     reg_dst =   1'b0;
@@ -67,9 +52,7 @@ always @(*)
                     
                     case(instruction)
                         `BNE:
-                            ALUop =     3'b110;
-                        default:
-                            ALUop =     3'b110;
+                            ALUop = 3'b110;
                     endcase
                 end
             
@@ -101,19 +84,24 @@ always @(*)
                     ALUop =     3'b000;
                     signXtend = 1'b1; 
                 end
-                
-            default:    
+
+      
+             `JAL:
                 begin
                     reg_dst =   1'b0;
+                    jump =      1'b1;
                     branch =    1'b0;
                     memRead =   1'b0;
                     mem2Reg =   1'b0;
                     memWrite =  1'b0;
                     ALUsrc =    1'b0;
-                    regWrite =  1'b1;
-                    ALUop =     3'b111;
+                    regWrite =  1'b0;
+                    ALUop =     3'b111;  
+                    signXtend = 1'b0;
+
+                    jump_address = {6'b0, instruction[25:0]};
                 end
+
         endcase
     end
-
 endmodule

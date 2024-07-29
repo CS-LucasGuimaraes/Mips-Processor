@@ -1,13 +1,17 @@
 `timescale 1ns / 1ps
 
-module MIPS_tb;
+module MIPS_tb();
     reg clk;
     
-    ________ mips(
+    processor mips(
         .clk(clk);
+    );
         
     initial 
     begin
+      	$dumpfile("dump.vcd");
+  		$dumpvars(0, top.atop);
+      
         // Load 0 into data memory 0
         mips.data_mem.memory[0] = 8'd0;
         mips.data_mem.memory[1] = 8'd0;

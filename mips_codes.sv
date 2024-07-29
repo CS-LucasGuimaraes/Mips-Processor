@@ -1,9 +1,8 @@
 //////////////////////////
 ///// Instruções R /////
 `define R_TYPE  6'b000000
-// Jump
-`define JR      6'b001000
 
+`define JR      6'b001000
 
 //////////////////////////
 ///// Instruções I /////
@@ -16,6 +15,7 @@
 
 // Load
 `define LW      6'b100011
+
 // Store
 `define SW      6'b101011
 
