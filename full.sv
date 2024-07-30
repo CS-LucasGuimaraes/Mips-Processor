@@ -174,10 +174,10 @@ always @ (*)
                     memRead =   1'b0;
                     mem2Reg =   1'b0;
                     memWrite =  1'b0;
-                    ALUsrc =    1'b1;
+                    ALUsrc =    1'b0;
                     regWrite =  1'b0;
-                    ALUop = 3'b110;
-                    jal = 1'b0;
+                    ALUop =   3'b110;
+                    jal =       1'b0;
                 end
             
              `LW:  // Load Instructions
@@ -305,8 +305,8 @@ begin
     if (reset) pc <= 32'd0;
     else begin
 
-        if (jal | branch) jump_address = {16'd0, instruction[15:0]} << 2;
-        else if (jump) jump_address = registers[31];
+        if (jal | (branch & ~zero)) assign jump_address = {16'd0, instruction[15:0]} << 2;
+        else if (jump) assign jump_address = registers[31];
         else assign jump_address = pcplus4;
 
         pc <= jump_address;
