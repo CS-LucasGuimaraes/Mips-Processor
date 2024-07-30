@@ -112,7 +112,7 @@ module MIPS_tb;
 
         // INSTRUCTION 14
         mips.my_ins_mem.memory[56] = 8'b00100001;
-        mips.my_ins_mem.memory[57] = 8'b00101000;
+        mips.my_ins_mem.memory[57] = 8'b00001000;
         mips.my_ins_mem.memory[58] = 8'b00000000;
         mips.my_ins_mem.memory[59] = 8'b00000001;
 
@@ -136,7 +136,7 @@ module MIPS_tb;
 
       	reset = 0;
       
-      	#60;
+      	#20000;
       	$finish;
     end
 

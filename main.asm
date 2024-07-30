@@ -38,7 +38,7 @@ main:
 
       if_else_main_end:
 
-      addi $t0, $t1, 1
+      addi $t0, $t0, 1
 
       sw $t0, 8($0)
 

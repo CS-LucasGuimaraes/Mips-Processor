@@ -190,15 +190,14 @@ always @ (*)
                     memWrite =  1'b0;
                     ALUsrc =    1'b1;
                     regWrite =  1'b1;
-                    ALUop =     3'b000;
+                    ALUop =     3'b010;
                     signXtend = 1'b1;
                     jal = 1'b0;
-                    $display("LW!!!!");
                 end
                 
              `SW:  // Store Instructions
                 begin
-                   reg_dst =    1'b0;
+                    reg_dst =   1'b0;
                     branch =    1'b0;
                     jump =      1'b0;
                     memRead =   1'b0;
@@ -206,7 +205,7 @@ always @ (*)
                     memWrite =  1'b1;
                     ALUsrc =    1'b1;
                     regWrite =  1'b0;
-                    ALUop =     3'b000;
+                    ALUop =     3'b010;
                     signXtend = 1'b1;
                     jal = 1'b0;
                 end
@@ -222,7 +221,7 @@ always @ (*)
                     memWrite =  1'b0;
                     ALUsrc =    1'b0;
                     regWrite =  1'b1;
-                    ALUop =     3'b111;  
+                    ALUop =     3'b010;  
                     signXtend = 1'b0;
                     jal = 1'b1;
                 end
@@ -240,7 +239,6 @@ always @ (*)
                     ALUop =     3'b010;  
                     signXtend = 1'b1;
                     jal = 1'b0;
-                    $display("ADDI!!!!");
                     
                 end
 
@@ -288,7 +286,7 @@ reg  [4:0] reg_file_write_address;
 wire [31:0] reg_file_write_data = (mem2Reg) ? read_data : ALUresult;
 reg [31:0] reg_file_out1;
 reg [31:0] reg_file_out2;
-wire [31:0] alu_input_2 = (ALUsrc) ? {16'b0, immediate} : reg_file_out2;
+reg [31:0] alu_input_2;
 
 always @ (*) begin
     if (reg_dst)
@@ -296,6 +294,13 @@ always @ (*) begin
     else begin
         if (jal) assign reg_file_write_address = 5'b11111;
         else assign reg_file_write_address = instruction[20:16];
+    end
+
+    if (ALUsrc)
+        assign alu_input_2 = {16'b0, immediate};
+    else begin
+        if (jal) assign alu_input_2 = pcplus4; 
+        else assign alu_input_2 = reg_file_out2;
     end
 end
 
@@ -310,7 +315,6 @@ begin
         else assign jump_address = pcplus4;
 
         pc <= jump_address;
-        $display("PC = JA");
     end
 end
 
