@@ -3,9 +3,11 @@
 
 module MIPS_tb;
     reg clk;
+  	reg reset;
     
     processor mips(
-        .clk(clk)
+        .clk(clk),
+        .reset(reset)
     );
         
     initial 
@@ -128,7 +130,11 @@ module MIPS_tb;
 
         clk = 0;
       
-      	mips.pc = 32'd0;
+		reset = 1;
+
+        #5;
+
+      	reset = 0;
       
       	#60;
       	$finish;

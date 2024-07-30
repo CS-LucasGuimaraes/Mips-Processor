@@ -249,7 +249,8 @@ always @ (*)
 endmodule
 
 module processor(
-    input clk
+    input clk,
+    input reset
 );
 
 // Control Wires
@@ -269,11 +270,11 @@ wire ALUsrc;
 
 
 // PC + Instruction Memory Wires
-reg [31:0]      pc;
-reg [31:0]      pcplus4;
+reg  [31:0]     pc;
+wire [31:0]     pcplus4 = pc + 4;
 wire [31:0]     instruction;
 wire [5:0]      opCode = instruction[31:26];
-reg [31:0]      jump_address;
+reg  [31:0]     jump_address;
 wire [4:0]      src_addr = instruction[25:21];
 wire [4:0]      trgt_addr = instruction[20:16];
 wire [4:0]      dest_addr = instruction[15:11];
@@ -301,11 +302,16 @@ end
 
 always@(posedge clk)
 begin
-    if (jal | branch) jump_address = {16'd0, instruction[15:0]} << 2;
-    else if (jump) jump_address = registers[31];
-    else assign jump_address = pc + 4;
+    if (reset) pc <= 32'd0;
+    else begin
 
-    assign pc = jump_address;
+        if (jal | branch) jump_address = {16'd0, instruction[15:0]} << 2;
+        else if (jump) jump_address = registers[31];
+        else assign jump_address = pcplus4;
+
+        pc <= jump_address;
+        $display("PC = JA");
+    end
 end
 
 
