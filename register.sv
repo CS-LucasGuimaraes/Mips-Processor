@@ -8,8 +8,9 @@ module register_file(
     input [31:0] write_data,
     output [31:0] read_data1,
     output [31:0] read_data2,
-    output [31:0] registers[31:0],
-    input write);
+    output reg [31:0] registers[31:0],
+    input write
+);
 
 integer i;
 initial begin 
@@ -22,7 +23,7 @@ end
 assign read_data1 = registers[reg_address1]; 
 assign read_data2 = registers[reg_address2]; 
 
-always@(negedge clk)
+always @ (negedge clk)
 begin
     if(write)
     begin
