@@ -12,6 +12,7 @@ module processor(
 
 // Control Wires
 wire reg_dst;
+wire jal;
 wire jump;
 wire branch;
 wire memRead;
@@ -22,17 +23,18 @@ wire regWrite;
 wire zero;
 wire ALUsrc;
 
-reg [31:0] registers[31:0];
 
 // PC + Instruction Memory Wires
-reg [31:0]      pc;
+reg  [31:0]     pc;
+wire [31:0]     pcplus4 = pc + 4;
 wire [31:0]     instruction;
 wire [5:0]      opCode = instruction[31:26];
-wire [31:0]     jump_address;
+reg  [31:0]     jump_address;
 wire [4:0]      src_addr = instruction[25:21];
 wire [4:0]      trgt_addr = instruction[20:16];
 wire [4:0]      dest_addr = instruction[15:11];
 wire [5:0]      funct = instruction[5:0];
+wire [15:0]     immediate = instruction[15:0];
 
 //ALU WIRES
 reg [31:0] alu_input_2;
@@ -40,8 +42,9 @@ wire [2:0] ALUop;
 wire [31:0] ALUresult;
 
 // REGISTER WIRES
+reg  [31:0] registers[31:0];
 wire [31:0] read_data;
-wire [4:0] reg_file_write_address = (reg_dst) ? dest_addr : trgt_addr;
+reg  [4:0] reg_file_write_address;
 wire [31:0] reg_file_write_data = (mem2Reg) ? read_data : ALUresult;
 reg [31:0] reg_file_out1;
 reg [31:0] reg_file_out2;
@@ -67,22 +70,32 @@ end
 // PC CONTROL
 always@ (posedge clk)
 begin
-    if (jump) assign pc = jump_address << 2;
-    else if (branch) assign pc = instruction[15:0] << 2;
-    else assign pc = pc + 4;
+    if (reset) pc <= 32'd0;
+    else begin
+
+        if (jal | (branch & ~zero)) assign jump_address = {16'd0, instruction[15:0]} << 2;
+        else if (jump) assign jump_address = registers[31];
+        else assign jump_address = pcplus4;
+
+        pc <= jump_address;
+    end
 end
+
 
 // Instantiation
 ALU my_alu(.ALUcontrol(ALUop),
                      .SrcA(reg_file_out1),
-                     .SrcB(reg_file_out2),
+                     .SrcB(alu_input_2),
                      .ALUresult(ALUresult),
                      .zero(zero)
 );
 
-control my_control(.instruction(instruction),
+control my_control(.clk(clk),
+                     .instruction(opCode),
+                     .memWrite(memWrite),
                      .funct(funct),
                      .zero(zero),
+                     .jal(jal),
                      .reg_dst(reg_dst),
                      .jump(jump),
                      .branch(branch),
@@ -91,8 +104,7 @@ control my_control(.instruction(instruction),
                      .regWrite(regWrite),
                      .ALUop(ALUop),
                      .ALUsrc(ALUsrc),
-                     .signXtend(signXtend),
-                     .jump_address(jump_address)
+                     .signXtend(signXtend)
 );
 
 register_file my_reg_file(.clk(clk), 

@@ -1,9 +1,11 @@
 `include "mips_codes.sv"
 
 module control(
+    input clk,
     input [5:0] instruction,
-    input [5:0] funct,
+    input [5:0] funct,    
     input zero,
+    output reg jal,
     output reg reg_dst,
     output reg jump,
     output reg branch,

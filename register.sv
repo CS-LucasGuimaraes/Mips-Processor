@@ -6,8 +6,9 @@ module register_file(
     input [31:0] write_data,
     output [31:0] read_data1,
     output [31:0] read_data2,
-    output [31:0] registers[31:0],
-    input write);
+    output reg [31:0] registers[31:0],
+    input write
+);
 
 initial 
 begin 

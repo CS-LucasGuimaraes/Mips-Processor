@@ -146,7 +146,7 @@ end
   
 always @ (*)
 begin
-    $display("Valor %d carregado na posição 8" , mips.data_memory.memory[8]);
+  $display("Valor %d carregado na posicao 8", {mips.data_mem.memory[8],mips.data_mem.memory[9],mips.data_mem.memory[10],mips.data_mem.memory[11]});
 end
 
 always @ (*) 

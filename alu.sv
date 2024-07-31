@@ -1,4 +1,3 @@
-
 module ALU (
     input [2:0] ALUcontrol,
     input [31:0] SrcA,
