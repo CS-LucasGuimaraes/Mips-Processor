@@ -1,1 +1,0 @@
-void contra_fatos(){}

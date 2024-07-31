@@ -10,7 +10,6 @@ int wait(int t) {
 }
 
 int main () {
-
     int x; // 0 or 1
     int k;
     std::cin >> x;
@@ -29,6 +28,5 @@ int main () {
 
         i++;
         std::cout << i << '\n';
-    }   
-
+    }
 }

@@ -1,5 +1,13 @@
-    module processor(
-    input clk
+`timescale 1ns / 1ps
+
+`include "alu.sv"
+`include "control.sv"
+`include "memory.sv"
+`include "register.sv"
+
+module processor(
+    input clk,
+    input reset
 );
 
 // Control Wires
@@ -11,9 +19,8 @@ wire mem2Reg;
 wire signXtend;
 wire memWrite;
 wire regWrite;
-wire [2:0] ALUop;
 wire zero;
-wire [31:0] ALUresult;
+wire ALUsrc;
 
 reg [31:0] registers[31:0];
 
@@ -27,16 +34,38 @@ wire [4:0]      trgt_addr = instruction[20:16];
 wire [4:0]      dest_addr = instruction[15:11];
 wire [5:0]      funct = instruction[5:0];
 
+//ALU WIRES
+reg [31:0] alu_input_2;
+wire [2:0] ALUop;
+wire [31:0] ALUresult;
+
 // REGISTER WIRES
 wire [31:0] read_data;
 wire [4:0] reg_file_write_address = (reg_dst) ? dest_addr : trgt_addr;
 wire [31:0] reg_file_write_data = (mem2Reg) ? read_data : ALUresult;
-wire [31:0] reg_file_out1;
-wire [31:0] reg_file_out2;
+reg [31:0] reg_file_out1;
+reg [31:0] reg_file_out2;
 
-assign reg_file_write_address = (reg_dst) ? instruction[15:11] : instruction[20:16];
+// REG/WIRES ASSIGNMENT
+always @ (*)
+begin
+    if (reg_dst)
+        assign reg_file_write_address = instruction[15:11];
+    else begin
+        if (jal) assign reg_file_write_address = 5'b11111;
+        else assign reg_file_write_address = instruction[20:16];
+    end
 
-always@(posedge clk)
+    if (ALUsrc)
+        assign alu_input_2 = {16'b0, immediate};
+    else begin
+        if (jal) assign alu_input_2 = pcplus4; 
+        else assign alu_input_2 = reg_file_out2;
+    end
+end
+
+// PC CONTROL
+always@ (posedge clk)
 begin
     if (jump) assign pc = jump_address << 2;
     else if (branch) assign pc = instruction[15:0] << 2;
@@ -44,7 +73,6 @@ begin
 end
 
 // Instantiation
-
 ALU my_alu(.ALUcontrol(ALUop),
                      .SrcA(reg_file_out1),
                      .SrcB(reg_file_out2),
@@ -73,12 +101,20 @@ register_file my_reg_file(.clk(clk),
                      .reg_write_address(reg_file_write_address), 
                      .write_data(reg_file_write_data), 
                      .read_data1(reg_file_out1), 
-                     .read_data2(reg_file_out2),
-                     .registers(registers),
-                     .write(regWrite));
+                     .read_data2(reg_file_out2), 
+                     .write(regWrite),
+                     .registers(registers)
+);
 
-instruction_memory my_ins_mem(.address(pc), .instruction(instruction));
+instruction_memory my_ins_mem(.address(pc), 
+                     .instruction(instruction)
+);
 
-data_memory data_mem(.clk(clk), .address(ALUresult), .write_data(reg_file_out2), .read_data(read_data), .write_enable(memWrite));
+data_memory data_mem(.clk(clk), 
+                     .address(ALUresult), 
+                     .write_data(reg_file_out2), 
+                     .read_data(read_data), 
+                     .write_enable(memWrite)
+);
 
 endmodule

@@ -15,7 +15,6 @@ wait:
    jr $ra
 
 main:
-
    lw $s0, 0($0)
    lw $s1, 4($0)
         
